@@ -1,0 +1,309 @@
+import mysql.connector as my
+mycon=my.connect(host='localhost', user='root', password='', database='libraryy')
+mycur=mycon.cursor()
+'''
+mycur.execute("use libraryy")
+
+mycur.execute("create table books_details(bid int(10),title varchar(20), author varchar(20), genre varchar(20), total int(200), avail int(200),shelf varchar(30))")
+
+mycur.execute("create table member_details(mid int(10),name varchar(20),phone int(10))")
+
+mycur.execute("create table issue_details(iid int(10),idate DATE,rdate DATE ,bid int(10),mid int(10))")
+
+mycur.execute("create table purchases(purchase_id int(7) primary key not null, book_id int(5), copies_purchased int(3), purchase_date date, vendor varchar(20))")
+'''
+def add_book():
+
+    ch=int(input("enter the no. of entries you want to add:"))
+    for i in range(ch):
+        bid = int(input("Enter Book ID: "))
+        title = input("Enter Book Title: ")
+        author = input("Enter Author: ")
+        genre = input("Enter Genre: ")
+        total = int(input("Enter Total Copies: "))
+        avail = int(input("Enter Available Copies: "))
+        shelf = input("Enter Shelf Location: ")
+        mycur.execute("INSERT INTO books_details VALUES(%s,%s,%s,%s,%s,%s,%s)",
+                (bid, title, author, genre, total, avail, shelf))
+        print("-"*20)
+    mycon.commit()
+    print("Book Added Successfully!\n")
+
+def view_books():
+    mycur.execute("SELECT * FROM books_details")
+    print("\n ALL BOOKS:")
+    for row in mycur.fetchall():
+        print(row)
+
+def search_book_by_id():
+    bid = int(input("Enter Book ID to Search: "))
+    mycur.execute("SELECT * FROM books_details WHERE bid=%s", (bid,))
+    data = mycur.fetchone()
+    if data:
+        print("Book Found:", data)
+    else:
+        print(" Book not found!")
+
+def search_book_by_name():
+    name = input("Enter part of Book Title: ")
+    mycur.execute("SELECT * FROM books_details WHERE title LIKE %s", ('%' + name                        + '%',))
+    data = mycur.fetchall()
+    if data:
+        print(" Matching Books:")
+        for row in data:
+            print(row)
+    else:
+        print("No book found with that name.")
+
+def update_book_shelf():
+    bid = int(input("Enter Book ID to Update Shelf: "))
+    shelf = input("Enter New Shelf: ")
+    mycur.execute("UPDATE books_details SET shelf=%s WHERE bid=%s", (shelf, bid))
+    mycon.commit()
+    print(" Shelf Updated Successfully!\n")
+
+def delete_book():
+    bid = int(input("Enter Book ID to Delete: "))
+    mycur.execute("DELETE FROM books_details WHERE bid=%s", (bid,))
+    mycon.commit()
+    print(" Book Deleted Successfully!\n")
+
+def view_books_by_shelf():
+    shelf = input("Enter Shelf Name: ")
+    mycur.execute("SELECT * FROM books_details WHERE shelf=%s", (shelf,))
+    data = mycur.fetchall()
+    if data:
+        print("Books on Shelf :",shelf)
+        for row in data:
+            print(row)
+    else:
+        print(" No books found on this shelf")
+
+#---------------------- MEMBER FUNCTIONS ----------------------
+def add_member():
+    ch=int(input("enter the no. of members you want to add:"))
+    for i in range(ch):
+        mid = int(input("Enter Member ID: "))
+        name = input("Enter Member Name: ")
+        phone = input("Enter Phone No: ")
+        mycur.execute("INSERT INTO member_details (mid ,name,phone) VALUES(%s,%s,%s)", (mid, name, phone))
+        mycon.commit()
+        print("-"*20)
+    print(" Members Added Successfully!\n")
+
+def view_members():
+    mycur.execute("SELECT * FROM member_details")
+    print("\n ALL MEMBERS:")
+    for row in mycur.fetchall():
+        print(row)
+
+#---------------------- ISSUE / RETURN ----------------------
+def issue_book():
+    ch=int(input("enter the no. of members you want to add:"))
+    for i in range(ch):
+        iid = int(input("Enter Issue ID: "))
+        bid = int(input("Enter Book ID: "))
+        mid = int(input("Enter Member ID: "))
+        idate = input("enter issue date (YYYY/MM/DD):")
+        rdate = input("Enter Return Date (YYYY/MM/DD): ")
+        mycur.execute("INSERT INTO issue_details(iid, bid, mid, idate, rdate) VALUES(%s,%s,%s,%s,%s)", (iid, bid, mid, idate, rdate))
+        mycon.commit()
+        print("-"*20)
+    print(" Members Added Successfully!\n")
+
+def update_av_copies():
+    bid=int(input("enter book id to update available copies:"))
+    mycur.execute("UPDATE books_details SET avail= avail-1 WHERE bid=%s", (bid,))
+    print("successfully updated")
+    mycon.commit()
+
+'''def delete_issueid():
+        iid=int(input("enter issue id to delete:"))
+        bid=int(input("enter book id to update available copies:"))
+        mycur.execute("DELETE FROM issue_details WHERE iid=%s", (iid,))
+        mycon.commit()
+        mycur.execute("UPDATE books_details SET avail=avail+1 WHERE bid=%s", (bid,))
+        mycon.commit()
+        print(" Book Returned Successfully!\n")'''
+    
+def extend_return_date():
+    iid = int(input("Enter Issue ID: "))
+    new_date = input("Enter New Return Date (YYYY/MM/DD): ")
+    mycur.execute("UPDATE issue_details SET rdate=%s WHERE iid=%s", (new_date, iid))
+    mycon.commit()
+    print("Return Date Extended Successfully!\n")
+
+def view_issued_books():
+    mycur.execute("SELECT * FROM issue_details")
+    print("\n ISSUED BOOKS:")
+    for row in mycur.fetchall():
+        print(row)
+      
+def view_overdue_books():
+    today=input("enter today's date:")
+    mycur.execute("SELECT * FROM issue_details WHERE rdate < %s", (today,))
+    data = mycur.fetchall()
+    if data:
+        print("\n OVERDUE BOOKS:")
+        for row in data:
+            print(row)
+    else:
+        print(" No overdue books.")
+
+def calculate_fine():
+    iid = int(input("Enter Issue ID: "))
+    mycur.execute("SELECT rdate FROM issue_details WHERE iid = %s", (iid,))
+    data = mycur.fetchone()
+    if data:
+        rdate = data[0]
+        today = input("Enter today's date (YYYY-MM-DD): ")
+        if today > str(rdate):
+            days_late = int(input("Enter number of days late: "))
+            fine = days_late * 5
+            print("Fine = ₹", fine)
+        else:
+            print("No fine.")
+    else:
+        print("Invalid Issue ID!")
+
+def fine_report():
+    today = input("Enter today's date (YYYY-MM-DD): ")
+    mycur.execute("SELECT rdate FROM issue_details WHERE rdate < %s", (today,))
+    data = mycur.fetchone() 
+    if data:
+        print("There are pending fines.")
+    else:
+        print("No pending fines!")
+
+def purchase_books():
+    pid = int(input("Enter Purchase ID: "))
+    bid = int(input("Enter Book ID: "))
+    qty = int(input("Enter number of copies purchased: "))
+    vendor = input("Enter Vendor Name: ")
+    pdate = input("enter today's date:")
+
+    mycur.execute("SELECT * FROM books_details WHERE bid=%s", (bid,))
+    book = mycur.fetchone()
+    if book:
+        mycur.execute("UPDATE books_details SET total=total+%s, avail=avail+%s   WHERE bid=%s", (qty, qty, bid))
+        mycon.commit()
+        print(qty,"copies added to existing stock.")
+    else:
+        print(" Book not found! Add it first.")
+        return
+
+    mycur.execute("INSERT INTO purchases VALUES(%s,%s,%s,%s,%s)", (pid, bid, qty, pdate, vendor))
+    mycon.commit()
+    print("Purchase recorded successfully!\n")
+
+def view_purchases():
+    mycur.execute("SELECT * FROM purchases")
+    print("\n PURCHASE RECORDS:")
+    for row in mycur.fetchall():
+        print(row)
+
+
+
+# ---------------------- ANALYTICS ----------------------
+def library_summary():
+    mycur.execute("SELECT COUNT(*) FROM books_details")
+    total_books = mycur.fetchone()[0]
+    
+    mycur.execute("SELECT COUNT(*) FROM member_details")
+    total_members = mycur.fetchone()[0]
+   
+    mycur.execute("SELECT COUNT(*) FROM issue_details")
+    issued = mycur.fetchone()[0]
+    
+    mycur.execute("SELECT SUM(avail) FROM books_details")
+    available = mycur.fetchone()[0]
+    
+#--------LIBRARY SUMMARY--------
+    print("Total Books:", (total_books))
+    print("Total Members:",total_members)
+    print("Issued Books: ",issued)
+    print("Available Copies:",available)
+
+
+def top_borrowed_books():
+    mycur.execute("""
+        SELECT books_details.title, COUNT(issue_details.bid) AS times_issued
+        FROM issue_details JOIN books_details ON issue_details.bid = books_details.bid
+        GROUP BY books_details.title
+        ORDER BY times_issued DESC
+    """)
+    data = mycur.fetchall()
+
+#----------TOP 5 BORROWED BOOKS---------
+    for row in data:
+        print(row[0]," : Issued ",row[1]," times")
+
+#-----------LIBRARY MANAGEMENT SYSTEM------------
+print("1.Add Book")
+print("2.View Books")
+print("3.Search Book by ID")
+print("4.Search Book by Name")
+print("5.Update Shelf")
+print("6.Delete Book")
+print("7.View Books by Shelf")
+print("8.Add Member")
+print("9.View Members")
+print("10.Issue Book")
+print("11.Update available books")
+print("12. Extend Return Date")
+print("13. View Issued Books")
+print("14. View Overdue Books")
+print("15. Calculate Fine")
+print("16. Fine Report")
+print("17. Purchase Books")
+print("18. View Purchases")
+print("19. Library Summary")
+print("20. Top Borrowed Books")
+print("21. Exit")
+
+ch = int(input("Enter your choice: "))
+if ch == 1:
+    add_book()
+elif ch == 2:
+    view_books()
+elif ch == 3:
+    search_book_by_id()
+elif ch == 4:
+    search_book_by_name()
+elif ch == 5:
+    update_book_shelf()
+elif ch == 6:
+    delete_book()
+elif ch == 7:
+    view_books_by_shelf()
+elif ch == 8:
+    add_member()
+elif ch == 9:
+    view_members()
+elif ch == 10:
+    issue_book()
+elif ch == 11:
+    update_av_copies()
+elif ch == 12:
+     extend_return_date()  
+elif ch == 13:
+    view_issued_books()
+elif ch == 14:
+    view_overdue_books()
+elif ch == 15:
+    calculate_fine()
+elif ch == 16:
+    fine_report()
+elif ch == 17:
+    purchase_books()
+elif ch == 18:
+    view_purchases()
+elif ch == 19:
+    library_summary()
+elif ch == 20:
+    top_borrowed_books()
+elif ch == 21:
+    print("Exiting... Goodbye!")
+else:
+    print(" Invalid Choice. Try again!")
+
