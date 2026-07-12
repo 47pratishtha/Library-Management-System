@@ -84,24 +84,24 @@ mycur = mycon.cursor()
 ## Running the project
 - Using IDLE: open `Sourcecode.py` in IDLE and press Run → Run Module (F5). The menu will appear.
 - From terminal: run `python Sourcecode.py` (replace with your entry filename if different).
-- 
+  
 ## Usage (quick)
 1. Ensure MySQL server is running and `libraryy` exists with the tables above.
 2. Update DB credentials in `config.py` or at the top of `Sourcecode.py`.
 3. Run the script and follow the on-screen menu prompts.
-4. 
+   
 ## Manual tests (examples)
 - Add Book → View Books to confirm entry.
 - Add Member → View Members to confirm.
 - Issue Book → View Issued Books and verify `avail` decreased.
 - Extend Return Date / View Overdue Books / Calculate Fine.
 - Purchase Books → View Purchases and confirm stock increment.
-- 
+  
 ## Troubleshooting
 - "Access denied" from MySQL: check DB user/password and host.
 - "ModuleNotFoundError: mysql.connector": run `pip install mysql-connector-python`.
 - If using IDLE, run pip from the same Python installation that IDLE uses.
-- 
+  
 ## License
 This project has no license. All rights reserved.
 
